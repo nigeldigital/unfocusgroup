@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{% if q %}Search: {{ q }}{% else %}Search{% endif %} | The Unfocus Group{% endblock %}
+
+{% block content %}
+<header class="mb-6">
+  <h1 class="font-display text-3xl font-semibold text-slate-700">Search feedback</h1>
+  <form action="/search" method="get" class="mt-4">
+    <input type="search" name="q" value="{{ q }}" autofocus placeholder="Search by keyword or brand"
+      class="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-700 placeholder-slate-300 focus:border-tiffany focus:outline-none focus:ring-2 focus:ring-tiffany/30" />
+  </form>
+</header>
+
+{% if q %}
+  <p class="mb-4 text-sm text-slate-500">
+    {{ results|length }} result{{ '' if results|length == 1 else 's' }} for "{{ q }}"{% if results|length == 50 %} (showing the first 50){% endif %}
+  </p>
+  {% if results %}
+    <ul class="space-y-4">
+      {% for post in results %}{% include "_post_card.html" %}{% endfor %}
+    </ul>
+  {% else %}
+    <div class="rounded-2xl bg-white p-10 text-center ring-1 ring-slate-200">
+      <p class="text-slate-500">No feedback matches "{{ q }}".</p>
+    </div>
+  {% endif %}
+{% else %}
+  <p class="text-slate-400">Type a keyword or brand name to search all feedback.</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}<script src="/static/vote.js"></script>{% endblock %}

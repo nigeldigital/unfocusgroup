@@ -1,0 +1,15 @@
+{# One feedback row. Needs `post` (from feedback_query) and `user` in scope. #}
+<li class="flex gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+  {% include "_votes.html" %}
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+      <a href="/b/{{ post['brand_slug'] }}" class="font-display font-semibold text-slate-700 hover:text-tiffany">{{ post["brand_name"] }}</a>
+      <span class="text-amber-500">{{ "★" * post["rating"] }}<span class="text-slate-300">{{ "★" * (5 - post["rating"]) }}</span></span>
+    </div>
+    <a href="/feedback/{{ post['id'] }}" class="mt-1 block text-slate-700 hover:text-slate-900">{{ post["feedback_text"] }}</a>
+    <div class="mt-2 flex items-center gap-3 text-xs text-slate-400">
+      <span>by {{ post["author"] }}</span>
+      <a href="/feedback/{{ post['id'] }}" class="hover:text-tiffany">{{ post["comment_count"] }} {{ "reply" if post["comment_count"] == 1 else "replies" }}</a>
+    </div>
+  </div>
+</li>

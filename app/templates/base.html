@@ -31,8 +31,8 @@
 
   <!-- Top bar -->
   <nav class="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
-    <div class="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
-      <a href="/" class="flex items-center gap-2">
+    <div class="mx-auto flex max-w-3xl items-center gap-3 px-5 py-3">
+      <a href="/" class="flex flex-none items-center gap-2">
         <svg class="h-7 w-7 flex-none" viewBox="0 0 56 56" aria-hidden="true">
           <circle cx="28" cy="28" r="27" fill="#0ABAB5" opacity="0.12"/>
           <circle cx="28" cy="28" r="20" fill="#0ABAB5" opacity="0.22"/>
@@ -41,7 +41,14 @@
         </svg>
         <span class="whitespace-nowrap font-display text-lg font-semibold text-slate-700 sm:text-xl">The Unfocus Group</span>
       </a>
-      <div class="flex items-center gap-3 text-sm">
+      <form action="/search" method="get" class="ml-2 hidden max-w-xs flex-1 sm:block">
+        <input type="search" name="q" value="{{ request.query_params.get('q', '') }}" placeholder="Search feedback"
+          class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 placeholder-slate-400 focus:border-tiffany focus:outline-none focus:ring-2 focus:ring-tiffany/30" />
+      </form>
+      <div class="ml-auto flex flex-none items-center gap-3 text-sm">
+        <a href="/search" aria-label="Search" class="text-slate-500 hover:text-slate-700 sm:hidden">
+          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4" stroke-linecap="round"/></svg>
+        </a>
         {% if user %}
           <a href="/submit" class="rounded-lg bg-tiffany px-4 py-2 font-semibold text-white transition hover:bg-tiffany-dark">Leave feedback</a>
           <span class="hidden text-slate-500 sm:inline">{{ user["username"] }}</span>

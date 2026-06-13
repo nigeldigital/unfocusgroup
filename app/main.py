@@ -146,6 +146,27 @@ def brand_suggestions(q: str = ""):
     return JSONResponse([{"name": r["brand_name"], "count": r["count"]} for r in rows])
 
 
+@app.get("/search", response_class=HTMLResponse)
+def search(request: Request, q: str = ""):
+    """Keyword search across feedback text and brand names."""
+    user = auth.current_user(request)
+    viewer_id = user["id"] if user else 0
+    q = q.strip()
+    results = []
+    if q:
+        # Escape LIKE wildcards, then match against both the text and the brand.
+        safe = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        like = f"%{safe}%"
+        with connect() as db:
+            results = db.execute(
+                feedback_query(
+                    "WHERE f.feedback_text LIKE ? ESCAPE '\\' OR f.brand_name LIKE ? ESCAPE '\\'"
+                ) + " ORDER BY f.id DESC LIMIT 50",
+                (viewer_id, like, like),
+            ).fetchall()
+    return page(request, "search.html", user, q=q, results=results)
+
+
 # --- Leaving feedback ----------------------------------------------------
 
 @app.get("/submit", response_class=HTMLResponse)
