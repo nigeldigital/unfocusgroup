@@ -237,9 +237,9 @@ def signup_form(request: Request, next: str = "/"):
 def signup(request: Request, username: str = Form(...), password: str = Form(...),
            next: str = Form("/")):
     username = username.strip()
-    if len(username) < 3:
+    if len(username) < 5:
         return page(request, "signup.html", None, next=next,
-                    error="Pick a username of 3 or more characters.")
+                    error="Pick a username of 5 or more characters.")
 
     weak = auth.password_problem(password, username)
     if weak:
