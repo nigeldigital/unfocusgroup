@@ -87,18 +87,54 @@ def password_matches(password, stored):
     return hmac.compare_digest(digest.hex(), digest_hex)
 
 
-def create_user(username, password):
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def looks_like_email(email):
+    """A light sanity check, not full RFC validation."""
+    return bool(EMAIL_RE.match((email or "").strip()))
+
+
+def create_user(username, password, email=None):
     """Add a new user. Returns the new id, or None if the name is taken."""
     now = datetime.now().isoformat(timespec="seconds")
     with connect() as db:
         try:
             cursor = db.execute(
-                "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
-                (username, hash_password(password), now),
+                "INSERT INTO users (username, password_hash, email, created_at) VALUES (?, ?, ?, ?)",
+                (username, hash_password(password), email, now),
             )
             return cursor.lastrowid
         except Exception:
             return None
+
+
+def make_email_token(user_id, purpose):
+    """Issue a single-use token (purpose is 'verify' or 'reset')."""
+    token = secrets.token_urlsafe(32)
+    now = datetime.now().isoformat(timespec="seconds")
+    with connect() as db:
+        db.execute(
+            "INSERT INTO email_tokens (token, user_id, purpose, created_at) VALUES (?, ?, ?, ?)",
+            (token, user_id, purpose, now),
+        )
+    return token
+
+
+def consume_email_token(token, purpose):
+    """Return the user_id for a valid token of this purpose, deleting it so it
+    can't be reused. Returns None if the token is missing or wrong purpose."""
+    if not token:
+        return None
+    with connect() as db:
+        row = db.execute(
+            "SELECT user_id FROM email_tokens WHERE token = ? AND purpose = ?",
+            (token, purpose),
+        ).fetchone()
+        if row:
+            db.execute("DELETE FROM email_tokens WHERE token = ?", (token,))
+            return row["user_id"]
+    return None
 
 
 def find_user(username):

@@ -13,7 +13,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import auth
+from . import auth, mailer
 from .db import connect, make_slug, set_up_database
 
 APP_DIR = Path(__file__).resolve().parent
@@ -376,26 +376,62 @@ def signup_form(request: Request, next: str = "/"):
 
 
 @app.post("/signup")
-def signup(request: Request, username: str = Form(...), password: str = Form(...),
-           next: str = Form("/")):
+def signup(request: Request, username: str = Form(...), email: str = Form(...),
+           password: str = Form(...), next: str = Form("/")):
     username = username.strip()
+    email = email.strip()
     if len(username) < 5:
-        return page(request, "signup.html", None, next=next,
+        return page(request, "signup.html", None, next=next, email=email,
                     error="Pick a username of 5 or more characters.")
+    if not auth.looks_like_email(email):
+        return page(request, "signup.html", None, next=next, email=email,
+                    error="Enter a valid email address.")
 
     weak = auth.password_problem(password, username)
     if weak:
-        return page(request, "signup.html", None, next=next, error=weak)
+        return page(request, "signup.html", None, next=next, email=email, error=weak)
 
-    user_id = auth.create_user(username, password)
+    user_id = auth.create_user(username, password, email)
     if user_id is None:
-        return page(request, "signup.html", None, next=next,
+        return page(request, "signup.html", None, next=next, email=email,
                     error="That name is taken. Try another.")
 
-    token = auth.start_session(user_id)
-    response = RedirectResponse(next or "/", status_code=303)
-    response.set_cookie(auth.COOKIE_NAME, token, httponly=True, samesite="lax")
+    # Send (in dev, log + show) the verification link, then sign them in.
+    verify_token = auth.make_email_token(user_id, "verify")
+    verify_url = f"{request.base_url}verify?token={verify_token}"
+    mailer.send_link(email, "Verify your email for The Unfocus Group", verify_url)
+
+    new_user = auth.find_user(username)
+    session_token = auth.start_session(user_id)
+    response = page(request, "verify_sent.html", new_user, email=email,
+                    dev_link=verify_url if mailer.DEV_SHOW_LINKS else None)
+    response.set_cookie(auth.COOKIE_NAME, session_token, httponly=True, samesite="lax")
     return response
+
+
+@app.get("/verify")
+def verify_email(request: Request, token: str = ""):
+    """Confirm an email from the link we sent."""
+    user_id = auth.consume_email_token(token, "verify")
+    if user_id:
+        with connect() as db:
+            db.execute("UPDATE users SET email_verified = 1 WHERE id = ?", (user_id,))
+    return RedirectResponse("/", status_code=303)
+
+
+@app.get("/resend-verification")
+def resend_verification(request: Request):
+    """Issue a fresh verification link for the logged-in user."""
+    user = auth.current_user(request)
+    if user is None:
+        return RedirectResponse("/login", status_code=303)
+    if user["email"] and not user["email_verified"]:
+        token = auth.make_email_token(user["id"], "verify")
+        url = f"{request.base_url}verify?token={token}"
+        mailer.send_link(user["email"], "Verify your email for The Unfocus Group", url)
+        return page(request, "verify_sent.html", user, email=user["email"],
+                    dev_link=url if mailer.DEV_SHOW_LINKS else None)
+    return RedirectResponse("/", status_code=303)
 
 
 @app.get("/login", response_class=HTMLResponse)

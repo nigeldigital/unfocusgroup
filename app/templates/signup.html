@@ -19,6 +19,12 @@
       <p class="mt-1 text-xs text-slate-400">5 characters or more.</p>
     </div>
     <div>
+      <label for="email" class="block text-sm font-semibold text-slate-700">Email</label>
+      <input id="email" name="email" type="email" required value="{{ email or '' }}"
+        class="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-700 focus:border-tiffany focus:outline-none focus:ring-2 focus:ring-tiffany/30" />
+      <p class="mt-1 text-xs text-slate-400">We send a link to confirm it's yours.</p>
+    </div>
+    <div>
       <label for="password" class="block text-sm font-semibold text-slate-700">Password</label>
       <input id="password" name="password" type="password" required minlength="10"
         class="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-700 focus:border-tiffany focus:outline-none focus:ring-2 focus:ring-tiffany/30" />

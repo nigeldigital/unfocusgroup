@@ -79,8 +79,22 @@ def set_up_database():
                 updated_at TEXT
             );
 
+            CREATE TABLE IF NOT EXISTS email_tokens (
+                token      TEXT    PRIMARY KEY,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                purpose    TEXT    NOT NULL,
+                created_at TEXT    NOT NULL
+            );
+
             CREATE INDEX IF NOT EXISTS idx_feedback_brand ON feedback(brand_slug);
             CREATE INDEX IF NOT EXISTS idx_votes_feedback ON votes(feedback_id);
             CREATE INDEX IF NOT EXISTS idx_comments_feedback ON comments(feedback_id);
             """
         )
+
+        # Migrate older databases: add the email columns to users if missing.
+        columns = {row["name"] for row in db.execute("PRAGMA table_info(users)")}
+        if "email" not in columns:
+            db.execute("ALTER TABLE users ADD COLUMN email TEXT")
+        if "email_verified" not in columns:
+            db.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0")

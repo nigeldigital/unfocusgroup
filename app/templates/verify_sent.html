@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Verify your email | The Unfocus Group{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-md text-center">
+  <h1 class="font-display text-2xl font-semibold text-slate-700">Check your email</h1>
+  <p class="mt-2 text-slate-500">
+    We sent a verification link to <span class="font-medium text-slate-700">{{ email }}</span>.
+    Click it to confirm your account.
+  </p>
+
+  {% if dev_link %}
+  <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-left">
+    <p class="text-sm font-semibold text-amber-800">Dev mode</p>
+    <p class="mt-1 text-sm text-amber-700">No mail server is configured, so here is the link directly:</p>
+    <a href="{{ dev_link }}" class="mt-2 block break-all text-sm font-medium text-tiffany hover:text-tiffany-dark">{{ dev_link }}</a>
+  </div>
+  {% endif %}
+
+  <a href="/" class="mt-6 inline-block text-sm font-medium text-slate-500 hover:text-slate-700">Back to the feed</a>
+</div>
+{% endblock %}

@@ -61,6 +61,15 @@
     </div>
   </nav>
 
+  {% if user and user["email"] and not user["email_verified"] %}
+  <div class="border-b border-amber-200 bg-amber-50">
+    <div class="mx-auto max-w-3xl px-5 py-2 text-sm text-amber-800">
+      Verify your email to confirm your account.
+      <a href="/resend-verification" class="font-semibold text-amber-900 underline hover:no-underline">Resend link</a>
+    </div>
+  </div>
+  {% endif %}
+
   <main class="mx-auto max-w-3xl px-5 py-8">
     {% block content %}{% endblock %}
   </main>
