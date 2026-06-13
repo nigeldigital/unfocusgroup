@@ -1,4 +1,4 @@
-# The Unfocused Group
+# The Unfocus Group
 
 The anti-focus group: a public, Reddit-style board where anyone can leave honest
 feedback for any brand. No moderator, no agenda, no one-way glass. Just honest

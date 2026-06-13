@@ -1,4 +1,4 @@
-"""The Unfocused Group: a public board where anyone can leave honest feedback
+"""The Unfocus Group: a public board where anyone can leave honest feedback
 for any brand, vote on what others wrote, and talk it through.
 
 Pages are plain server-rendered HTML. Only voting talks back to the server
@@ -18,7 +18,7 @@ from .db import connect, make_slug, set_up_database
 
 APP_DIR = Path(__file__).resolve().parent
 
-app = FastAPI(title="The Unfocused Group")
+app = FastAPI(title="The Unfocus Group")
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
 

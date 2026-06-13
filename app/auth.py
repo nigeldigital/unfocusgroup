@@ -31,7 +31,7 @@ COMMON_PASSWORDS = {
     "111111", "000000", "iloveyou", "admin123", "welcome1",
     "letmein", "monkey123", "dragon123", "sunshine", "princess1",
     "trustno1", "starwars", "football1", "baseball1", "changeme",
-    "secret123", "unfocused", "unfocusedgroup", "theunfocusedgroup",
+    "secret123", "unfocus", "unfocusgroup", "theunfocusgroup",
 }
 
 
