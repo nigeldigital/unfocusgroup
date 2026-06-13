@@ -58,6 +58,9 @@ def sort_clause(sort):
 
 PER_PAGE = 15
 
+# How many community flags before a post is marked as under review.
+FLAG_THRESHOLD = 2
+
 
 def page_window(sort, page_no):
     """SQL tail for one page of results. Fetches one extra row so the caller
@@ -185,7 +188,33 @@ def feedback_detail(request: Request, feedback_id: int):
             """,
             (feedback_id,),
         ).fetchall()
-    return page(request, "detail.html", user, post=post, comments=comments)
+        flag_count = db.execute(
+            "SELECT COUNT(*) AS c FROM flags WHERE feedback_id = ?", (feedback_id,)
+        ).fetchone()["c"]
+        my_flag = bool(user and db.execute(
+            "SELECT 1 FROM flags WHERE feedback_id = ? AND user_id = ?",
+            (feedback_id, user["id"]),
+        ).fetchone())
+    return page(request, "detail.html", user, post=post, comments=comments,
+                my_flag=my_flag, flagged=flag_count >= FLAG_THRESHOLD)
+
+
+@app.post("/feedback/{feedback_id}/flag")
+def flag_feedback(request: Request, feedback_id: int, reason: str = Form("")):
+    """Let the community report bad-faith feedback. One flag per person."""
+    user = auth.current_user(request)
+    if user is None:
+        return RedirectResponse(f"/login?next=/feedback/{feedback_id}", status_code=303)
+    with connect() as db:
+        exists = db.execute("SELECT 1 FROM feedback WHERE id = ?", (feedback_id,)).fetchone()
+        if exists:
+            db.execute(
+                "INSERT OR IGNORE INTO flags (feedback_id, user_id, reason, created_at) "
+                "VALUES (?, ?, ?, ?)",
+                (feedback_id, user["id"], reason.strip() or None,
+                 datetime.now().isoformat(timespec="seconds")),
+            )
+    return RedirectResponse(f"/feedback/{feedback_id}", status_code=303)
 
 
 @app.get("/brands/suggest")
