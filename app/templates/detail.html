@@ -13,7 +13,7 @@
       <span class="text-amber-500">{{ "★" * post["rating"] }}<span class="text-slate-300">{{ "★" * (5 - post["rating"]) }}</span></span>
     </div>
     <p class="mt-2 text-lg leading-relaxed text-slate-700">{{ post["feedback_text"] }}</p>
-    <p class="mt-3 text-xs text-slate-400">by {{ post["author"] }} · {{ post["timestamp"] }}</p>
+    <p class="mt-3 text-xs text-slate-400">by <a href="/u/{{ post['author']|urlencode }}" class="hover:text-tiffany">{{ post["author"] }}</a> · {{ post["timestamp"] }}</p>
   </div>
 </article>
 
@@ -40,7 +40,7 @@
       {% for c in comments %}
       <li class="rounded-xl bg-white p-4 ring-1 ring-slate-200">
         <p class="text-slate-700">{{ c["comment_text"] }}</p>
-        <p class="mt-2 text-xs text-slate-400">{{ c["author"] }} · {{ c["timestamp"] }}</p>
+        <p class="mt-2 text-xs text-slate-400"><a href="/u/{{ c['author']|urlencode }}" class="hover:text-tiffany">{{ c["author"] }}</a> · {{ c["timestamp"] }}</p>
       </li>
       {% endfor %}
     </ul>

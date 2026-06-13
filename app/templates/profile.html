@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user["username"] }} | The Unfocus Group{% endblock %}
+
+{% block content %}
+<header class="mb-8 flex items-center gap-4 border-b border-slate-200 pb-6">
+  <div class="grid h-14 w-14 flex-none place-items-center rounded-full bg-tiffany/10 font-display text-xl font-semibold text-tiffany">
+    {{ profile_user["username"][0]|upper }}
+  </div>
+  <div>
+    <h1 class="font-display text-2xl font-semibold text-slate-700">{{ profile_user["username"] }}</h1>
+    <p class="mt-1 text-sm text-slate-500">
+      Joined {{ profile_user["created_at"][:10] }}
+      · {{ posts|length }} post{{ '' if posts|length == 1 else 's' }}
+      · {{ comments|length }} repl{{ 'y' if comments|length == 1 else 'ies' }}
+    </p>
+  </div>
+</header>
+
+<section class="mb-10">
+  <h2 class="mb-4 font-display text-lg font-semibold text-slate-700">Feedback</h2>
+  {% if posts %}
+    <ul class="space-y-4">
+      {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-sm text-slate-400">No feedback yet.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2 class="mb-4 font-display text-lg font-semibold text-slate-700">Replies</h2>
+  {% if comments %}
+    <ul class="space-y-3">
+      {% for c in comments %}
+      <li class="rounded-xl bg-white p-4 ring-1 ring-slate-200">
+        <p class="text-slate-700">{{ c["comment_text"] }}</p>
+        <p class="mt-2 text-xs text-slate-400">
+          on <a href="/feedback/{{ c['feedback_id'] }}" class="font-medium text-slate-500 hover:text-tiffany">{{ c["brand_name"] }}</a>
+          · {{ c["timestamp"][:10] }}
+        </p>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-sm text-slate-400">No replies yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="/static/vote.js"></script>{% endblock %}

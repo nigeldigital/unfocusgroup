@@ -167,6 +167,37 @@ def search(request: Request, q: str = ""):
     return page(request, "search.html", user, q=q, results=results)
 
 
+@app.get("/u/{username}", response_class=HTMLResponse)
+def profile(request: Request, username: str):
+    """A person's page: everything they've posted and replied to, plus when
+    they joined. Builds accountability for the feedback they leave."""
+    user = auth.current_user(request)
+    viewer_id = user["id"] if user else 0
+    with connect() as db:
+        profile_user = db.execute(
+            "SELECT id, username, created_at FROM users WHERE username = ?", (username,)
+        ).fetchone()
+        if profile_user is None:
+            return RedirectResponse("/", status_code=303)
+        posts = db.execute(
+            feedback_query("WHERE f.user_id = ?") + " ORDER BY f.id DESC",
+            (viewer_id, profile_user["id"]),
+        ).fetchall()
+        comments = db.execute(
+            """
+            SELECT c.comment_text, c.timestamp, c.feedback_id,
+                   f.brand_name, f.brand_slug
+            FROM comments c
+            JOIN feedback f ON f.id = c.feedback_id
+            WHERE c.user_id = ?
+            ORDER BY c.id DESC
+            """,
+            (profile_user["id"],),
+        ).fetchall()
+    return page(request, "profile.html", user,
+                profile_user=profile_user, posts=posts, comments=comments)
+
+
 # --- Leaving feedback ----------------------------------------------------
 
 @app.get("/submit", response_class=HTMLResponse)

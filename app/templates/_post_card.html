@@ -8,7 +8,7 @@
     </div>
     <a href="/feedback/{{ post['id'] }}" class="mt-1 block text-slate-700 hover:text-slate-900">{{ post["feedback_text"] }}</a>
     <div class="mt-2 flex items-center gap-3 text-xs text-slate-400">
-      <span>by {{ post["author"] }}</span>
+      <span>by <a href="/u/{{ post['author']|urlencode }}" class="hover:text-tiffany">{{ post["author"] }}</a></span>
       <a href="/feedback/{{ post['id'] }}" class="hover:text-tiffany">{{ post["comment_count"] }} {{ "reply" if post["comment_count"] == 1 else "replies" }}</a>
     </div>
   </div>
