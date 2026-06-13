@@ -7,7 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/static/style.css" />
   <script>
     tailwind.config = {
@@ -17,7 +18,10 @@
             tiffany: "#0ABAB5",
             "tiffany-dark": "#089a96",
           },
-          fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
+          fontFamily: {
+            sans: ["Inter", "system-ui", "sans-serif"],
+            display: ["Outfit", "system-ui", "sans-serif"],
+          },
         },
       },
     };
@@ -29,8 +33,13 @@
   <nav class="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
     <div class="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
       <a href="/" class="flex items-center gap-2">
-        <span class="grid h-7 w-7 place-items-center rounded-lg bg-tiffany text-sm font-bold text-white">U</span>
-        <span class="whitespace-nowrap text-base font-bold text-slate-700 sm:text-lg">The Unfocused Group</span>
+        <svg class="h-7 w-7 flex-none" viewBox="0 0 56 56" aria-hidden="true">
+          <circle cx="28" cy="28" r="27" fill="#0ABAB5" opacity="0.12"/>
+          <circle cx="28" cy="28" r="20" fill="#0ABAB5" opacity="0.22"/>
+          <circle cx="28" cy="28" r="13" fill="#0ABAB5" opacity="0.45"/>
+          <circle cx="28" cy="28" r="7"  fill="#0ABAB5"/>
+        </svg>
+        <span class="whitespace-nowrap font-display text-lg font-semibold text-slate-700 sm:text-xl">The Unfocused Group</span>
       </a>
       <div class="flex items-center gap-3 text-sm">
         {% if user %}
@@ -50,7 +59,7 @@
   </main>
 
   <footer class="mx-auto max-w-3xl px-5 py-10 text-center text-sm text-slate-400">
-    The Unfocused Group — the anti-focus group. Honest feedback for every brand.
+    The Unfocused Group: the alternative to a focus group. Ideas that can help improve your brand.
   </footer>
 
   {% block scripts %}{% endblock %}

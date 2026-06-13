@@ -8,14 +8,65 @@ token stored in an httponly cookie and matched against the sessions table.
 import hashlib
 import hmac
 import os
+import re
 import secrets
 from datetime import datetime
 
 from .db import connect
 
 COOKIE_NAME = "session"
-# How many rounds of hashing — higher is slower for an attacker.
+# How many rounds of hashing: higher is slower for an attacker.
 HASH_ROUNDS = 200_000
+
+# Password rules. Length does the heavy lifting; the rest stops the easy guesses.
+MIN_PASSWORD_LENGTH = 10
+MAX_PASSWORD_LENGTH = 128  # cap the work an attacker can force us to do per hash
+
+# The passwords attackers try first. Anything here is cracked in seconds no matter
+# how long it is, so we turn it away outright.
+COMMON_PASSWORDS = {
+    "password", "password1", "password123", "passw0rd", "p@ssw0rd",
+    "123456", "1234567", "12345678", "123456789", "1234567890",
+    "qwerty", "qwertyuiop", "qwerty123", "abc123", "a1b2c3d4",
+    "111111", "000000", "iloveyou", "admin123", "welcome1",
+    "letmein", "monkey123", "dragon123", "sunshine", "princess1",
+    "trustno1", "starwars", "football1", "baseball1", "changeme",
+    "secret123", "unfocused", "unfocusedgroup", "theunfocusedgroup",
+}
+
+
+def password_problem(password, username=""):
+    """Return a plain-language reason the password is too weak, or None if it's fine.
+
+    The aim is real resistance to guessing and credential-stuffing, not box-ticking:
+    decent length, a mix of character types, nothing already on every attacker's
+    wordlist, and nothing built out of the person's own username.
+    """
+    if len(password) < MIN_PASSWORD_LENGTH:
+        return f"Use at least {MIN_PASSWORD_LENGTH} characters. Longer is stronger."
+    if len(password) > MAX_PASSWORD_LENGTH:
+        return f"Keep it under {MAX_PASSWORD_LENGTH} characters."
+
+    kinds = sum([
+        bool(re.search(r"[a-z]", password)),
+        bool(re.search(r"[A-Z]", password)),
+        bool(re.search(r"[0-9]", password)),
+        bool(re.search(r"[^A-Za-z0-9]", password)),
+    ])
+    if kinds < 3:
+        return "Mix at least three of: lowercase, uppercase, numbers, and symbols."
+
+    if len(set(password)) < 5:
+        return "Use a wider variety of characters, not the same few repeated."
+
+    lowered = password.lower()
+    if lowered in COMMON_PASSWORDS:
+        return "That password is too common. Pick something less guessable."
+
+    if username and len(username) >= 3 and username.lower() in lowered:
+        return "Don't build your password out of your username."
+
+    return None
 
 
 def hash_password(password):

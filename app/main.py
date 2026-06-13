@@ -1,4 +1,4 @@
-"""The Unfocused Group — a public board where anyone can leave honest feedback
+"""The Unfocused Group: a public board where anyone can leave honest feedback
 for any brand, vote on what others wrote, and talk it through.
 
 Pages are plain server-rendered HTML. Only voting talks back to the server
@@ -149,7 +149,7 @@ def create_feedback(
 
     if not brand_name or not slug or not feedback_text or not (1 <= rating <= 5):
         return page(request, "submit.html", user, brand=brand_name,
-                    error="Add a brand, a rating, and a few words — then send it.")
+                    error="Add a brand, a rating, and a few words, then send it.")
 
     now = datetime.now().isoformat(timespec="seconds")
     with connect() as db:
@@ -237,9 +237,13 @@ def signup_form(request: Request, next: str = "/"):
 def signup(request: Request, username: str = Form(...), password: str = Form(...),
            next: str = Form("/")):
     username = username.strip()
-    if len(username) < 3 or len(password) < 6:
+    if len(username) < 3:
         return page(request, "signup.html", None, next=next,
-                    error="Pick a name of 3+ characters and a password of 6+.")
+                    error="Pick a username of 3 or more characters.")
+
+    weak = auth.password_problem(password, username)
+    if weak:
+        return page(request, "signup.html", None, next=next, error=weak)
 
     user_id = auth.create_user(username, password)
     if user_id is None:

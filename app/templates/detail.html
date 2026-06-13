@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ post["brand_name"] }} — The Unfocused Group{% endblock %}
+{% block title %}{{ post["brand_name"] }} | The Unfocused Group{% endblock %}
 
 {% block content %}
 <a href="/b/{{ post['brand_slug'] }}" class="text-sm font-medium text-slate-500 hover:text-tiffany">← Back to {{ post["brand_name"] }}</a>
@@ -9,7 +9,7 @@
   {% include "_votes.html" %}
   <div class="min-w-0 flex-1">
     <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-      <a href="/b/{{ post['brand_slug'] }}" class="font-semibold text-slate-700 hover:text-tiffany">{{ post["brand_name"] }}</a>
+      <a href="/b/{{ post['brand_slug'] }}" class="font-display font-semibold text-slate-700 hover:text-tiffany">{{ post["brand_name"] }}</a>
       <span class="text-amber-500">{{ "★" * post["rating"] }}<span class="text-slate-300">{{ "★" * (5 - post["rating"]) }}</span></span>
     </div>
     <p class="mt-2 text-lg leading-relaxed text-slate-700">{{ post["feedback_text"] }}</p>

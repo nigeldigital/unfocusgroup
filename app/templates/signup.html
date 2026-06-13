@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Join — The Unfocused Group{% endblock %}
+{% block title %}Join | The Unfocused Group{% endblock %}
 
 {% block content %}
 <div class="mx-auto max-w-sm">
-  <h1 class="text-2xl font-bold text-slate-700">Join The Unfocused Group</h1>
+  <h1 class="font-display text-3xl font-semibold text-slate-700">Join The Unfocused Group</h1>
   <p class="mt-1 text-slate-500">Pick a name and a password. That's it.</p>
 
   {% if error %}
@@ -20,9 +20,9 @@
     </div>
     <div>
       <label for="password" class="block text-sm font-semibold text-slate-700">Password</label>
-      <input id="password" name="password" type="password" required minlength="6"
+      <input id="password" name="password" type="password" required minlength="10"
         class="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-700 focus:border-tiffany focus:outline-none focus:ring-2 focus:ring-tiffany/30" />
-      <p class="mt-1 text-xs text-slate-400">6 characters or more.</p>
+      <p class="mt-1 text-xs text-slate-400">At least 10 characters, mixing letters, numbers, and symbols. A long passphrase works great.</p>
     </div>
     <button type="submit" class="w-full rounded-lg bg-tiffany px-6 py-3 font-semibold text-white transition hover:bg-tiffany-dark">Create account</button>
   </form>

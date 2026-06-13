@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}{{ heading }} — The Unfocused Group{% endblock %}
+{% block title %}{{ heading }} | The Unfocused Group{% endblock %}
 
 {% block content %}
 {% if not brand %}
 <header class="mb-8 border-b border-slate-200 pb-6">
-  <h1 class="text-3xl font-bold tracking-tight text-slate-700">The anti-focus group.</h1>
-  <p class="mt-2 max-w-2xl text-lg text-slate-500">No moderator. No agenda. No one-way glass. Just honest feedback for every brand — in one place.</p>
+  <h1 class="font-display text-4xl font-semibold text-slate-700">The anti-focus group.</h1>
+  <p class="mt-3 max-w-2xl text-lg text-slate-500">No moderator. No agenda. No one-way glass. Just honest feedback for every brand, in one place.</p>
 </header>
 {% endif %}
 <div class="grid gap-8 md:grid-cols-[1fr,16rem]">
@@ -15,7 +15,7 @@
     <div class="mb-6 flex items-end justify-between">
       <div>
         {% if brand %}<span class="text-sm font-semibold uppercase tracking-widest text-tiffany">Brand</span>{% endif %}
-        <h1 class="text-2xl font-bold text-slate-700">{{ heading }}</h1>
+        <h1 class="font-display text-2xl font-semibold text-slate-700">{{ heading }}</h1>
       </div>
       <div class="flex gap-1 text-sm">
         {% set base = "/b/" ~ brand if brand else "/" %}
@@ -31,7 +31,7 @@
           {% include "_votes.html" %}
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-              <a href="/b/{{ post['brand_slug'] }}" class="font-semibold text-slate-700 hover:text-tiffany">{{ post["brand_name"] }}</a>
+              <a href="/b/{{ post['brand_slug'] }}" class="font-display font-semibold text-slate-700 hover:text-tiffany">{{ post["brand_name"] }}</a>
               <span class="text-amber-500">{{ "★" * post["rating"] }}<span class="text-slate-300">{{ "★" * (5 - post["rating"]) }}</span></span>
             </div>
             <a href="/feedback/{{ post['id'] }}" class="mt-1 block text-slate-700 hover:text-slate-900">{{ post["feedback_text"] }}</a>
@@ -59,7 +59,7 @@
         {% for b in brands %}
         <li>
           <a href="/b/{{ b['brand_slug'] }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition hover:bg-white {{ 'bg-white ring-1 ring-slate-200' if b['brand_slug'] == brand else '' }}">
-            <span class="font-medium text-slate-700">{{ b["brand_name"] }}</span>
+            <span class="font-display font-medium text-slate-700">{{ b["brand_name"] }}</span>
             <span class="text-slate-400">{{ b["count"] }}</span>
           </a>
         </li>

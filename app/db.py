@@ -1,4 +1,4 @@
-"""Database for The Unfocused Group — SQLite, opened fresh per request.
+"""Database for The Unfocused Group. SQLite, opened fresh per request.
 
 Brands are not a table of their own. A brand "exists" the moment someone
 leaves feedback for it, the same way a subreddit fills up from posts. We
