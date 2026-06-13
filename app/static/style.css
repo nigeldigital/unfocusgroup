@@ -1,0 +1,24 @@
+/* Brand Feedback — a few touches on top of Tailwind. */
+
+/* Tiffany Blue and slate, named once so they are easy to find. */
+:root {
+  --tiffany: #0ABAB5;
+  --slate: #334155;
+}
+
+/* Smooth the edges Tailwind leaves on text rendering. */
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* A clear focus ring for anyone moving through the form by keyboard. */
+:focus-visible {
+  outline: 2px solid var(--tiffany);
+  outline-offset: 2px;
+}
+
+/* Keep the textarea from growing past a comfortable reading width. */
+textarea {
+  line-height: 1.6;
+}

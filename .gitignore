@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Local SQLite database (runtime + test feedback, not source)
+*.db
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+
+# Machine-specific tooling (absolute paths)
+.claude/

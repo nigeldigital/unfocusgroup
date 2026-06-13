@@ -1,0 +1,16 @@
+{# A small up/down column. Needs `post` and `user` in scope.
+   The buttons carry the post id and the viewer's current vote; vote.js
+   wires them up. When logged out they nudge the viewer to log in. #}
+<div class="flex flex-col items-center gap-0.5 text-slate-400"
+     data-vote-widget data-id="{{ post['id'] }}" data-my-vote="{{ post['my_vote'] }}"
+     data-logged-in="{{ 'yes' if user else 'no' }}">
+  <button type="button" data-vote="1" aria-label="Agree"
+          class="vote-up rounded p-1 transition hover:bg-slate-100 hover:text-tiffany {{ 'text-tiffany' if post['my_vote'] == 1 else '' }}">
+    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3l7 9H3l7-9z"/></svg>
+  </button>
+  <span data-score class="text-sm font-bold text-slate-700">{{ post["score"] }}</span>
+  <button type="button" data-vote="-1" aria-label="Disagree"
+          class="vote-down rounded p-1 transition hover:bg-slate-100 hover:text-rose-500 {{ 'text-rose-500' if post['my_vote'] == -1 else '' }}">
+    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 17l-7-9h14l-7 9z"/></svg>
+  </button>
+</div>
