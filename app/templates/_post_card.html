@@ -10,6 +10,12 @@
     <div class="mt-2 flex items-center gap-3 text-xs text-slate-400">
       <span>by <a href="/u/{{ post['author']|urlencode }}" class="hover:text-tiffany">{{ post["author"] }}</a></span>
       <a href="/feedback/{{ post['id'] }}" class="hover:text-tiffany">{{ post["comment_count"] }} {{ "reply" if post["comment_count"] == 1 else "replies" }}</a>
+      {% if user %}
+      <form action="/feedback/{{ post['id'] }}/save" method="post" class="inline">
+        <input type="hidden" name="next" value="{{ request.url.path }}" />
+        <button class="hover:text-tiffany {{ 'font-medium text-tiffany' if post['saved'] else '' }}">{{ '★ Saved' if post['saved'] else '☆ Save' }}</button>
+      </form>
+      {% endif %}
     </div>
   </div>
 </li>

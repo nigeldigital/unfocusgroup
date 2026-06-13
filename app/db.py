@@ -94,6 +94,13 @@ def set_up_database():
                 PRIMARY KEY (feedback_id, user_id)
             );
 
+            CREATE TABLE IF NOT EXISTS saves (
+                user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                feedback_id INTEGER NOT NULL REFERENCES feedback(id) ON DELETE CASCADE,
+                created_at  TEXT    NOT NULL,
+                PRIMARY KEY (user_id, feedback_id)
+            );
+
             CREATE INDEX IF NOT EXISTS idx_feedback_brand ON feedback(brand_slug);
             CREATE INDEX IF NOT EXISTS idx_votes_feedback ON votes(feedback_id);
             CREATE INDEX IF NOT EXISTS idx_comments_feedback ON comments(feedback_id);

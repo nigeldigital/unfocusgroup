@@ -45,6 +45,19 @@
     <p class="text-sm text-slate-400">No replies yet.</p>
   {% endif %}
 </section>
+
+{% if is_self %}
+<section class="mt-10">
+  <h2 class="mb-4 font-display text-lg font-semibold text-slate-700">Saved</h2>
+  {% if saved_posts %}
+    <ul class="space-y-4">
+      {% for post in saved_posts %}{% include "_post_card.html" %}{% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-sm text-slate-400">You haven't saved anything yet. Tap "Save" on any feedback to keep it here.</p>
+  {% endif %}
+</section>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}<script src="/static/vote.js"></script>{% endblock %}

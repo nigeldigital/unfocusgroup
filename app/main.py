@@ -44,7 +44,9 @@ def feedback_query(where=""):
             u.username AS author,
             COALESCE((SELECT SUM(value) FROM votes WHERE feedback_id = f.id), 0) AS score,
             (SELECT COUNT(*) FROM comments WHERE feedback_id = f.id) AS comment_count,
-            COALESCE((SELECT value FROM votes WHERE feedback_id = f.id AND user_id = ?), 0) AS my_vote
+            COALESCE((SELECT value FROM votes WHERE feedback_id = f.id AND user_id = ?), 0) AS my_vote,
+            CASE WHEN EXISTS(SELECT 1 FROM saves WHERE feedback_id = f.id AND user_id = ?)
+                 THEN 1 ELSE 0 END AS saved
         FROM feedback f
         JOIN users u ON u.id = f.user_id
         {where}
@@ -77,7 +79,7 @@ def home(request: Request, sort: str = "new", page_no: int = Query(1, alias="pag
     viewer_id = user["id"] if user else 0
     tail, tail_params = page_window(sort, page_no)
     with connect() as db:
-        rows = db.execute(feedback_query() + tail, (viewer_id, *tail_params)).fetchall()
+        rows = db.execute(feedback_query() + tail, (viewer_id, viewer_id, *tail_params)).fetchall()
         brands = db.execute(
             """
             SELECT brand_slug, brand_name, COUNT(*) AS count
@@ -99,7 +101,7 @@ def brand_page(request: Request, brand_slug: str, sort: str = "new",
     with connect() as db:
         rows = db.execute(
             feedback_query("WHERE f.brand_slug = ?") + tail,
-            (viewer_id, brand_slug, *tail_params),
+            (viewer_id, viewer_id, brand_slug, *tail_params),
         ).fetchall()
         brands = db.execute(
             """
@@ -176,7 +178,7 @@ def feedback_detail(request: Request, feedback_id: int):
     viewer_id = user["id"] if user else 0
     with connect() as db:
         post = db.execute(
-            feedback_query("WHERE f.id = ?"), (viewer_id, feedback_id)
+            feedback_query("WHERE f.id = ?"), (viewer_id, viewer_id, feedback_id)
         ).fetchone()
         if post is None:
             return RedirectResponse("/", status_code=303)
@@ -215,6 +217,30 @@ def flag_feedback(request: Request, feedback_id: int, reason: str = Form("")):
                  datetime.now().isoformat(timespec="seconds")),
             )
     return RedirectResponse(f"/feedback/{feedback_id}", status_code=303)
+
+
+@app.post("/feedback/{feedback_id}/save")
+def toggle_save(request: Request, feedback_id: int, next: str = Form("/")):
+    """Bookmark or un-bookmark a piece of feedback. Saves show on your profile."""
+    user = auth.current_user(request)
+    if user is None:
+        return RedirectResponse(f"/login?next=/feedback/{feedback_id}", status_code=303)
+    with connect() as db:
+        existing = db.execute(
+            "SELECT 1 FROM saves WHERE user_id = ? AND feedback_id = ?",
+            (user["id"], feedback_id),
+        ).fetchone()
+        if existing:
+            db.execute(
+                "DELETE FROM saves WHERE user_id = ? AND feedback_id = ?",
+                (user["id"], feedback_id),
+            )
+        elif db.execute("SELECT 1 FROM feedback WHERE id = ?", (feedback_id,)).fetchone():
+            db.execute(
+                "INSERT OR IGNORE INTO saves (user_id, feedback_id, created_at) VALUES (?, ?, ?)",
+                (user["id"], feedback_id, datetime.now().isoformat(timespec="seconds")),
+            )
+    return RedirectResponse(next or "/", status_code=303)
 
 
 @app.get("/brands/suggest")
@@ -257,7 +283,7 @@ def search(request: Request, q: str = ""):
                 feedback_query(
                     "WHERE f.feedback_text LIKE ? ESCAPE '\\' OR f.brand_name LIKE ? ESCAPE '\\'"
                 ) + " ORDER BY f.id DESC LIMIT 50",
-                (viewer_id, like, like),
+                (viewer_id, viewer_id, like, like),
             ).fetchall()
     return page(request, "search.html", user, q=q, results=results)
 
@@ -276,7 +302,7 @@ def profile(request: Request, username: str):
             return RedirectResponse("/", status_code=303)
         posts = db.execute(
             feedback_query("WHERE f.user_id = ?") + " ORDER BY f.id DESC",
-            (viewer_id, profile_user["id"]),
+            (viewer_id, viewer_id, profile_user["id"]),
         ).fetchall()
         comments = db.execute(
             """
@@ -289,8 +315,18 @@ def profile(request: Request, username: str):
             """,
             (profile_user["id"],),
         ).fetchall()
+        # A person's saved feedback is private, so only show it on your own page.
+        is_self = bool(user and user["id"] == profile_user["id"])
+        saved_posts = []
+        if is_self:
+            saved_posts = db.execute(
+                feedback_query("JOIN saves sv ON sv.feedback_id = f.id AND sv.user_id = ?")
+                + " ORDER BY sv.created_at DESC, f.id DESC",
+                (viewer_id, viewer_id, profile_user["id"]),
+            ).fetchall()
     return page(request, "profile.html", user,
-                profile_user=profile_user, posts=posts, comments=comments)
+                profile_user=profile_user, posts=posts, comments=comments,
+                is_self=is_self, saved_posts=saved_posts)
 
 
 # --- Leaving feedback ----------------------------------------------------
