@@ -93,12 +93,64 @@ def brand_page(request: Request, brand_slug: str, sort: str = "new"):
             ORDER BY count DESC, brand_name LIMIT 12
             """
         ).fetchall()
-    if not posts:
-        return page(request, "feed.html", user, posts=[], brands=brands,
-                    sort=sort, heading=brand_slug, brand=brand_slug)
-    display_name = posts[0]["brand_name"]
+        claim = db.execute(
+            """
+            SELECT bc.brand_slug, bc.user_id, bc.response, bc.verified,
+                   u.username AS owner
+            FROM brand_claims bc
+            JOIN users u ON u.id = bc.user_id
+            WHERE bc.brand_slug = ?
+            """,
+            (brand_slug,),
+        ).fetchone()
+    heading = posts[0]["brand_name"] if posts else brand_slug
+    is_owner = bool(user and claim and claim["user_id"] == user["id"])
     return page(request, "feed.html", user, posts=posts, brands=brands,
-                sort=sort, heading=display_name, brand=brand_slug)
+                sort=sort, heading=heading, brand=brand_slug,
+                claim=claim, is_owner=is_owner)
+
+
+@app.post("/b/{brand_slug}/claim")
+def claim_brand(request: Request, brand_slug: str):
+    """Let a logged-in user claim an as-yet-unclaimed brand. (A production
+    version would verify real ownership, e.g. via a company email domain;
+    here a claim is granted directly and flagged verified for the demo.)"""
+    user = auth.current_user(request)
+    if user is None:
+        return RedirectResponse(f"/login?next=/b/{brand_slug}", status_code=303)
+    now = datetime.now().isoformat(timespec="seconds")
+    with connect() as db:
+        brand_exists = db.execute(
+            "SELECT 1 FROM feedback WHERE brand_slug = ? LIMIT 1", (brand_slug,)
+        ).fetchone()
+        already_claimed = db.execute(
+            "SELECT 1 FROM brand_claims WHERE brand_slug = ?", (brand_slug,)
+        ).fetchone()
+        if brand_exists and not already_claimed:
+            db.execute(
+                "INSERT INTO brand_claims (brand_slug, user_id, verified, claimed_at) "
+                "VALUES (?, ?, 1, ?)",
+                (brand_slug, user["id"], now),
+            )
+    return RedirectResponse(f"/b/{brand_slug}", status_code=303)
+
+
+@app.post("/b/{brand_slug}/response")
+def brand_response(request: Request, brand_slug: str, response: str = Form("")):
+    """The brand's owner posts or edits their official response."""
+    user = auth.current_user(request)
+    if user is None:
+        return RedirectResponse(f"/login?next=/b/{brand_slug}", status_code=303)
+    with connect() as db:
+        claim = db.execute(
+            "SELECT user_id FROM brand_claims WHERE brand_slug = ?", (brand_slug,)
+        ).fetchone()
+        if claim and claim["user_id"] == user["id"]:
+            db.execute(
+                "UPDATE brand_claims SET response = ?, updated_at = ? WHERE brand_slug = ?",
+                (response.strip() or None, datetime.now().isoformat(timespec="seconds"), brand_slug),
+            )
+    return RedirectResponse(f"/b/{brand_slug}", status_code=303)
 
 
 @app.get("/feedback/{feedback_id}", response_class=HTMLResponse)

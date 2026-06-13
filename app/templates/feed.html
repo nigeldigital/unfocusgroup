@@ -16,6 +16,9 @@
       <div>
         {% if brand %}<span class="text-sm font-semibold uppercase tracking-widest text-tiffany">Brand</span>{% endif %}
         <h1 class="font-display text-2xl font-semibold text-slate-700">{{ heading }}</h1>
+        {% if claim and claim["verified"] %}
+        <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-tiffany">✓ Official brand account</span>
+        {% endif %}
       </div>
       <div class="flex gap-1 text-sm">
         {% set base = "/b/" ~ brand if brand else "/" %}
@@ -23,6 +26,33 @@
         <a href="{{ base }}?sort=top" class="rounded-lg px-3 py-1.5 font-medium {{ 'bg-white text-tiffany ring-1 ring-slate-200' if sort == 'top' else 'text-slate-500' }}">Top</a>
       </div>
     </div>
+
+    {% if brand %}
+      {% if claim and claim["response"] %}
+      <div class="mb-6 rounded-2xl border border-tiffany/30 bg-tiffany/5 p-5">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center gap-1 rounded-full bg-tiffany px-2.5 py-0.5 text-xs font-semibold text-white">✓ Official</span>
+          <span class="text-sm font-medium text-slate-600">{{ claim["owner"] }}</span>
+        </div>
+        <p class="mt-2 leading-relaxed text-slate-700">{{ claim["response"] }}</p>
+      </div>
+      {% endif %}
+
+      {% if is_owner %}
+      <form action="/b/{{ brand }}/response" method="post" class="mb-6 rounded-2xl bg-white p-5 ring-1 ring-slate-200">
+        <label for="response" class="block text-sm font-semibold text-slate-700">Your official response</label>
+        <p class="mt-1 text-xs text-slate-400">You own this brand. This shows at the top of the page with an Official badge.</p>
+        <textarea id="response" name="response" rows="3" placeholder="Respond to this feedback as the brand."
+          class="mt-2 w-full resize-none rounded-lg border border-slate-300 px-4 py-3 text-slate-700 placeholder-slate-300 focus:border-tiffany focus:outline-none focus:ring-2 focus:ring-tiffany/30">{{ claim["response"] or "" }}</textarea>
+        <button class="mt-2 rounded-lg bg-tiffany px-5 py-2 text-sm font-semibold text-white transition hover:bg-tiffany-dark">Save official response</button>
+      </form>
+      {% elif user and not claim %}
+      <form action="/b/{{ brand }}/claim" method="post" class="mb-6">
+        <button class="rounded-lg border border-tiffany px-4 py-2 text-sm font-semibold text-tiffany transition hover:bg-tiffany/5">Claim this brand</button>
+        <span class="ml-2 text-xs text-slate-400">Work here? Claim the brand to post an official response.</span>
+      </form>
+      {% endif %}
+    {% endif %}
 
     {% if posts %}
       <ul class="space-y-4">

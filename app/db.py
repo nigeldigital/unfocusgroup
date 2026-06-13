@@ -70,6 +70,15 @@ def set_up_database():
                 timestamp    TEXT    NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS brand_claims (
+                brand_slug TEXT    PRIMARY KEY,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                response   TEXT,
+                verified   INTEGER NOT NULL DEFAULT 0,
+                claimed_at TEXT    NOT NULL,
+                updated_at TEXT
+            );
+
             CREATE INDEX IF NOT EXISTS idx_feedback_brand ON feedback(brand_slug);
             CREATE INDEX IF NOT EXISTS idx_votes_feedback ON votes(feedback_id);
             CREATE INDEX IF NOT EXISTS idx_comments_feedback ON comments(feedback_id);
