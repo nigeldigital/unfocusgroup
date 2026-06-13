@@ -11,10 +11,14 @@
   {% endif %}
 
   <form action="/submit" method="post" class="mt-6 space-y-7 rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-    <div>
+    <div class="relative">
       <label for="brand_name" class="block text-sm font-semibold text-slate-700">Which brand or product?</label>
-      <input id="brand_name" name="brand_name" type="text" required value="{{ brand }}" placeholder="e.g. Acme Coffee"
+      <input id="brand_name" name="brand_name" type="text" required value="{{ brand }}" placeholder="Start typing — e.g. Apple"
+        autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="brand-suggest"
         class="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-700 placeholder-slate-300 focus:border-tiffany focus:outline-none focus:ring-2 focus:ring-tiffany/30" />
+      <ul id="brand-suggest" role="listbox"
+        class="absolute left-0 right-0 z-20 mt-1 hidden max-h-64 overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"></ul>
+      <p class="mt-1 text-xs text-slate-400">If your brand is already listed, pick it so feedback stays together.</p>
     </div>
 
     <div>
@@ -65,5 +69,95 @@
     starRow.appendChild(star);
   }
   paintStars(pickedRating);
+</script>
+
+<script>
+  // Brand autocomplete: suggest existing brands as the user types, so people
+  // land on the same brand page instead of creating near-duplicates.
+  const brandInput = document.getElementById("brand_name");
+  const suggestBox = document.getElementById("brand-suggest");
+  let suggestions = [];
+  let activeIndex = -1;
+  let lookupTimer;
+
+  function escapeHtml(text) {
+    return text.replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
+
+  function closeSuggest() {
+    suggestBox.classList.add("hidden");
+    suggestBox.innerHTML = "";
+    brandInput.setAttribute("aria-expanded", "false");
+    suggestions = [];
+    activeIndex = -1;
+  }
+
+  function showSuggest(list) {
+    suggestions = list;
+    if (!list.length) { closeSuggest(); return; }
+    suggestBox.innerHTML = list.map((b, i) => (
+      `<li role="option" data-i="${i}" class="flex cursor-pointer items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">` +
+        `<span>${escapeHtml(b.name)}</span>` +
+        `<span class="ml-3 text-xs text-slate-400">${b.count} ${b.count === 1 ? "post" : "posts"}</span>` +
+      `</li>`
+    )).join("");
+    suggestBox.classList.remove("hidden");
+    brandInput.setAttribute("aria-expanded", "true");
+    activeIndex = -1;
+  }
+
+  function highlight(index) {
+    const options = [...suggestBox.querySelectorAll("li")];
+    options.forEach((o) => o.classList.remove("bg-slate-100"));
+    if (!options.length) return;
+    activeIndex = (index + options.length) % options.length;
+    options[activeIndex].classList.add("bg-slate-100");
+    options[activeIndex].scrollIntoView({ block: "nearest" });
+  }
+
+  function pick(index) {
+    if (suggestions[index]) {
+      brandInput.value = suggestions[index].name;
+      closeSuggest();
+    }
+  }
+
+  brandInput.addEventListener("input", () => {
+    const q = brandInput.value.trim();
+    clearTimeout(lookupTimer);
+    if (!q) { closeSuggest(); return; }
+    lookupTimer = setTimeout(async () => {
+      try {
+        const res = await fetch("/brands/suggest?q=" + encodeURIComponent(q));
+        const data = await res.json();
+        // Skip the dropdown if the only match is exactly what's already typed.
+        if (data.length === 1 && data[0].name.toLowerCase() === q.toLowerCase()) {
+          closeSuggest();
+        } else {
+          showSuggest(data);
+        }
+      } catch (err) { closeSuggest(); }
+    }, 150);
+  });
+
+  brandInput.addEventListener("keydown", (e) => {
+    if (suggestBox.classList.contains("hidden")) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); highlight(activeIndex + 1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); highlight(activeIndex - 1); }
+    else if (e.key === "Enter" && activeIndex >= 0) { e.preventDefault(); pick(activeIndex); }
+    else if (e.key === "Escape") { closeSuggest(); }
+  });
+
+  // Use mousedown, not click, so it fires before the input loses focus.
+  suggestBox.addEventListener("mousedown", (e) => {
+    const li = e.target.closest("li[data-i]");
+    if (li) { e.preventDefault(); pick(Number(li.dataset.i)); }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (e.target !== brandInput && !suggestBox.contains(e.target)) closeSuggest();
+  });
 </script>
 {% endblock %}

@@ -122,6 +122,30 @@ def feedback_detail(request: Request, feedback_id: int):
     return page(request, "detail.html", user, post=post, comments=comments)
 
 
+@app.get("/brands/suggest")
+def brand_suggestions(q: str = ""):
+    """Return up to eight existing brands matching what the user is typing, so
+    people reuse a brand's page instead of spawning near-duplicates."""
+    q = q.strip()
+    if not q:
+        return JSONResponse([])
+    # Escape LIKE wildcards so a stray % or _ doesn't match everything.
+    safe = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    with connect() as db:
+        rows = db.execute(
+            """
+            SELECT brand_name, COUNT(*) AS count
+            FROM feedback
+            WHERE brand_name LIKE ? ESCAPE '\\'
+            GROUP BY brand_slug
+            ORDER BY (brand_name LIKE ? ESCAPE '\\') DESC, count DESC, brand_name
+            LIMIT 8
+            """,
+            (f"%{safe}%", f"{safe}%"),
+        ).fetchall()
+    return JSONResponse([{"name": r["brand_name"], "count": r["count"]} for r in rows])
+
+
 # --- Leaving feedback ----------------------------------------------------
 
 @app.get("/submit", response_class=HTMLResponse)
