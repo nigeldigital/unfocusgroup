@@ -121,6 +121,19 @@ def make_email_token(user_id, purpose):
     return token
 
 
+def email_token_user(token, purpose):
+    """Return the user_id for a valid token without consuming it, or None.
+    Used to check a reset link before showing the new-password form."""
+    if not token:
+        return None
+    with connect() as db:
+        row = db.execute(
+            "SELECT user_id FROM email_tokens WHERE token = ? AND purpose = ?",
+            (token, purpose),
+        ).fetchone()
+        return row["user_id"] if row else None
+
+
 def consume_email_token(token, purpose):
     """Return the user_id for a valid token of this purpose, deleting it so it
     can't be reused. Returns None if the token is missing or wrong purpose."""
@@ -135,6 +148,15 @@ def consume_email_token(token, purpose):
             db.execute("DELETE FROM email_tokens WHERE token = ?", (token,))
             return row["user_id"]
     return None
+
+
+def set_password(user_id, password):
+    """Replace a user's password with a fresh hash."""
+    with connect() as db:
+        db.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (hash_password(password), user_id),
+        )
 
 
 def find_user(username):

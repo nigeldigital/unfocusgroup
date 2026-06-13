@@ -560,11 +560,11 @@ def resend_verification(request: Request):
 
 
 @app.get("/login", response_class=HTMLResponse)
-def login_form(request: Request, next: str = "/"):
+def login_form(request: Request, next: str = "/", reset: int = 0):
     user = auth.current_user(request)
     if user:
         return RedirectResponse("/", status_code=303)
-    return page(request, "login.html", None, next=next, error=None)
+    return page(request, "login.html", None, next=next, error=None, reset=reset)
 
 
 @app.post("/login")
@@ -587,3 +587,51 @@ def logout(request: Request):
     response = RedirectResponse("/", status_code=303)
     response.delete_cookie(auth.COOKIE_NAME)
     return response
+
+
+@app.get("/forgot", response_class=HTMLResponse)
+def forgot_form(request: Request):
+    return page(request, "forgot.html", auth.current_user(request),
+                sent=False, dev_link=None, email="")
+
+
+@app.post("/forgot")
+def forgot(request: Request, email: str = Form(...)):
+    """Email a password-reset link to the address on file."""
+    email = email.strip()
+    dev_link = None
+    with connect() as db:
+        row = db.execute("SELECT id, email FROM users WHERE email = ?", (email,)).fetchone()
+    if row and row["email"]:
+        token = auth.make_email_token(row["id"], "reset")
+        url = f"{request.base_url}reset?token={token}"
+        mailer.send_link(row["email"], "Reset your password for The Unfocus Group", url)
+        if mailer.DEV_SHOW_LINKS:
+            dev_link = url
+    # Always show the same message so we don't reveal which emails are registered.
+    return page(request, "forgot.html", auth.current_user(request),
+                sent=True, dev_link=dev_link, email=email)
+
+
+@app.get("/reset", response_class=HTMLResponse)
+def reset_form(request: Request, token: str = ""):
+    valid = auth.email_token_user(token, "reset") is not None
+    return page(request, "reset.html", None, token=token, valid=valid, error=None)
+
+
+@app.post("/reset")
+def reset_password(request: Request, token: str = Form(...), password: str = Form(...)):
+    user_id = auth.email_token_user(token, "reset")
+    if user_id is None:
+        return page(request, "reset.html", None, token=token, valid=False, error=None)
+
+    with connect() as db:
+        row = db.execute("SELECT username FROM users WHERE id = ?", (user_id,)).fetchone()
+    username = row["username"] if row else ""
+    weak = auth.password_problem(password, username)
+    if weak:
+        return page(request, "reset.html", None, token=token, valid=True, error=weak)
+
+    auth.consume_email_token(token, "reset")
+    auth.set_password(user_id, password)
+    return RedirectResponse("/login?reset=1", status_code=303)

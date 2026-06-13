@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Set a new password | The Unfocus Group{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-sm">
+  <h1 class="font-display text-3xl font-semibold text-slate-700">Set a new password</h1>
+
+  {% if not valid %}
+    <p class="mt-2 text-slate-500">
+      This reset link is invalid or has expired.
+      <a href="/forgot" class="font-semibold text-tiffany hover:text-tiffany-dark">Request a new one</a>.
+    </p>
+  {% else %}
+    {% if error %}
+      <p class="mt-4 rounded-lg bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600">{{ error }}</p>
+    {% endif %}
+    <form action="/reset" method="post" class="mt-6 space-y-5 rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+      <input type="hidden" name="token" value="{{ token }}" />
+      <div>
+        <label for="password" class="block text-sm font-semibold text-slate-700">New password</label>
+        <input id="password" name="password" type="password" required minlength="10" autofocus
+          class="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-700 focus:border-tiffany focus:outline-none focus:ring-2 focus:ring-tiffany/30" />
+        <p class="mt-1 text-xs text-slate-400">At least 10 characters, mixing letters, numbers, and symbols.</p>
+      </div>
+      <button type="submit" class="w-full rounded-lg bg-tiffany px-6 py-3 font-semibold text-white transition hover:bg-tiffany-dark">Set password</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}
