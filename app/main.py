@@ -120,12 +120,22 @@ def brand_page(request: Request, brand_slug: str, sort: str = "new",
             """,
             (brand_slug,),
         ).fetchone()
+        stats = db.execute(
+            """
+            SELECT COUNT(*) AS n, AVG(rating) AS avg,
+                   SUM(rating = 5) AS s5, SUM(rating = 4) AS s4,
+                   SUM(rating = 3) AS s3, SUM(rating = 2) AS s2,
+                   SUM(rating = 1) AS s1
+            FROM feedback WHERE brand_slug = ?
+            """,
+            (brand_slug,),
+        ).fetchone()
     posts = rows[:PER_PAGE]
     heading = posts[0]["brand_name"] if posts else brand_slug
     is_owner = bool(user and claim and claim["user_id"] == user["id"])
     return page(request, "feed.html", user, posts=posts, brands=brands,
                 sort=sort, heading=heading, brand=brand_slug,
-                claim=claim, is_owner=is_owner,
+                claim=claim, is_owner=is_owner, rating_stats=stats,
                 page_no=page_no, has_next=len(rows) > PER_PAGE)
 
 
