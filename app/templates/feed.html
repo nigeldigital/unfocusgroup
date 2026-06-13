@@ -19,6 +19,7 @@
         {% if claim and claim["verified"] %}
         <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-tiffany">✓ Official brand account</span>
         {% endif %}
+        {% if brand %}<a href="/b/{{ brand }}/feed.xml" class="mt-1 block text-xs font-medium text-slate-400 hover:text-tiffany">Subscribe via RSS</a>{% endif %}
       </div>
       <div class="flex gap-1 text-sm">
         {% set base = "/b/" ~ brand if brand else "/" %}

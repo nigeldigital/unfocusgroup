@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  {% if brand %}<link rel="alternate" type="application/rss+xml" title="{{ heading }} feedback" href="/b/{{ brand }}/feed.xml" />{% endif %}
   <link rel="stylesheet" href="/static/style.css" />
   <script>
     tailwind.config = {

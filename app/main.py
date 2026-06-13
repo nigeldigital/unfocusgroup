@@ -6,10 +6,12 @@ with a small fetch call, so the rest works without any JavaScript.
 """
 
 from datetime import datetime
+from email.utils import format_datetime
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 from fastapi import FastAPI, Form, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -180,6 +182,54 @@ def brand_response(request: Request, brand_slug: str, response: str = Form("")):
                 (response.strip() or None, datetime.now().isoformat(timespec="seconds"), brand_slug),
             )
     return RedirectResponse(f"/b/{brand_slug}", status_code=303)
+
+
+@app.get("/b/{brand_slug}/feed.xml")
+def brand_feed(request: Request, brand_slug: str):
+    """An RSS feed of recent feedback for a brand, for people who want to
+    subscribe. Plain XML, no JavaScript."""
+    with connect() as db:
+        rows = db.execute(
+            """
+            SELECT f.id, f.brand_name, f.rating, f.feedback_text, f.timestamp,
+                   u.username AS author
+            FROM feedback f JOIN users u ON u.id = f.user_id
+            WHERE f.brand_slug = ?
+            ORDER BY f.id DESC LIMIT 30
+            """,
+            (brand_slug,),
+        ).fetchall()
+    base = str(request.base_url).rstrip("/")
+    brand_name = rows[0]["brand_name"] if rows else brand_slug
+
+    items = []
+    for r in rows:
+        link = f"{base}/feedback/{r['id']}"
+        try:
+            pub = format_datetime(datetime.fromisoformat(r["timestamp"]))
+        except ValueError:
+            pub = ""
+        items.append(
+            "    <item>\n"
+            f"      <title>{r['rating']} stars from {escape(r['author'])}</title>\n"
+            f"      <link>{link}</link>\n"
+            f"      <guid>{link}</guid>\n"
+            f"      <description>{escape(r['feedback_text'])}</description>\n"
+            f"      <pubDate>{pub}</pubDate>\n"
+            "    </item>"
+        )
+
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0">\n'
+        "  <channel>\n"
+        f"    <title>{escape(brand_name)} feedback on The Unfocus Group</title>\n"
+        f"    <link>{base}/b/{brand_slug}</link>\n"
+        f"    <description>Honest feedback for {escape(brand_name)}, in one place.</description>\n"
+        + "\n".join(items)
+        + "\n  </channel>\n</rss>\n"
+    )
+    return Response(content=xml, media_type="application/rss+xml")
 
 
 @app.get("/feedback/{feedback_id}", response_class=HTMLResponse)
