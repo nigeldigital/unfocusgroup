@@ -8,7 +8,7 @@ with a small fetch call, so the rest works without any JavaScript.
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Form, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -56,16 +56,25 @@ def sort_clause(sort):
     return "ORDER BY score DESC, f.id DESC" if sort == "top" else "ORDER BY f.id DESC"
 
 
+PER_PAGE = 15
+
+
+def page_window(sort, page_no):
+    """SQL tail for one page of results. Fetches one extra row so the caller
+    can tell whether a further page exists, without a separate COUNT."""
+    offset = (page_no - 1) * PER_PAGE
+    return f"{sort_clause(sort)} LIMIT ? OFFSET ?", (PER_PAGE + 1, offset)
+
+
 # --- The feed and brand pages -------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
-def home(request: Request, sort: str = "new"):
+def home(request: Request, sort: str = "new", page_no: int = Query(1, alias="page", ge=1)):
     user = auth.current_user(request)
     viewer_id = user["id"] if user else 0
+    tail, tail_params = page_window(sort, page_no)
     with connect() as db:
-        posts = db.execute(
-            feedback_query() + sort_clause(sort), (viewer_id,)
-        ).fetchall()
+        rows = db.execute(feedback_query() + tail, (viewer_id, *tail_params)).fetchall()
         brands = db.execute(
             """
             SELECT brand_slug, brand_name, COUNT(*) AS count
@@ -73,18 +82,21 @@ def home(request: Request, sort: str = "new"):
             ORDER BY count DESC, brand_name LIMIT 12
             """
         ).fetchall()
-    return page(request, "feed.html", user, posts=posts, brands=brands,
-                sort=sort, heading="All feedback", brand=None)
+    return page(request, "feed.html", user, posts=rows[:PER_PAGE], brands=brands,
+                sort=sort, heading="All feedback", brand=None,
+                page_no=page_no, has_next=len(rows) > PER_PAGE)
 
 
 @app.get("/b/{brand_slug}", response_class=HTMLResponse)
-def brand_page(request: Request, brand_slug: str, sort: str = "new"):
+def brand_page(request: Request, brand_slug: str, sort: str = "new",
+               page_no: int = Query(1, alias="page", ge=1)):
     user = auth.current_user(request)
     viewer_id = user["id"] if user else 0
+    tail, tail_params = page_window(sort, page_no)
     with connect() as db:
-        posts = db.execute(
-            feedback_query("WHERE f.brand_slug = ?") + sort_clause(sort),
-            (viewer_id, brand_slug),
+        rows = db.execute(
+            feedback_query("WHERE f.brand_slug = ?") + tail,
+            (viewer_id, brand_slug, *tail_params),
         ).fetchall()
         brands = db.execute(
             """
@@ -103,11 +115,13 @@ def brand_page(request: Request, brand_slug: str, sort: str = "new"):
             """,
             (brand_slug,),
         ).fetchone()
+    posts = rows[:PER_PAGE]
     heading = posts[0]["brand_name"] if posts else brand_slug
     is_owner = bool(user and claim and claim["user_id"] == user["id"])
     return page(request, "feed.html", user, posts=posts, brands=brands,
                 sort=sort, heading=heading, brand=brand_slug,
-                claim=claim, is_owner=is_owner)
+                claim=claim, is_owner=is_owner,
+                page_no=page_no, has_next=len(rows) > PER_PAGE)
 
 
 @app.post("/b/{brand_slug}/claim")

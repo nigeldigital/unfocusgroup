@@ -33,6 +33,11 @@ DEMO_FEEDBACK = [
     ("priya", "Netflix",    3, "Stop cancelling shows after one season before they find an audience."),
     ("tomas", "Starbucks",  3, "Balance the mobile orders so the in-store line isn't always last."),
     ("lena",  "Spotify",    4, "Pay artists more. The per-stream rate is insulting."),
+    ("mara",  "Tesla",      3, "Bring back physical buttons for the wipers and climate."),
+    ("devin", "Adidas",     4, "Stop the constant app-only drops. Let me just buy the shoes."),
+    ("priya", "Microsoft",  2, "Quit forcing OS updates that reboot mid-work."),
+    ("tomas", "Uber",       3, "Show the real price up front, not after I book."),
+    ("lena",  "Airbnb",     2, "Ban the surprise cleaning fees. Put it all in the nightly rate."),
 ]
 
 

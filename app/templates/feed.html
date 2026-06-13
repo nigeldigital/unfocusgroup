@@ -58,6 +58,17 @@
       <ul class="space-y-4">
         {% for post in posts %}{% include "_post_card.html" %}{% endfor %}
       </ul>
+      {% if (page_no and page_no > 1) or has_next %}
+      <nav class="mt-6 flex items-center justify-between text-sm">
+        {% if page_no and page_no > 1 %}
+          <a href="{{ base }}?sort={{ sort }}&page={{ page_no - 1 }}" class="rounded-lg bg-white px-4 py-2 font-medium text-tiffany ring-1 ring-slate-200 hover:bg-slate-50">← Newer</a>
+        {% else %}<span></span>{% endif %}
+        <span class="text-slate-400">Page {{ page_no or 1 }}</span>
+        {% if has_next %}
+          <a href="{{ base }}?sort={{ sort }}&page={{ (page_no or 1) + 1 }}" class="rounded-lg bg-white px-4 py-2 font-medium text-tiffany ring-1 ring-slate-200 hover:bg-slate-50">Older →</a>
+        {% else %}<span></span>{% endif %}
+      </nav>
+      {% endif %}
     {% else %}
       <div class="rounded-2xl bg-white p-10 text-center ring-1 ring-slate-200">
         <p class="text-slate-500">Nothing here yet.</p>
